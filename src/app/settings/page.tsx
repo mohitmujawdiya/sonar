@@ -44,7 +44,15 @@ export default function SettingsPage() {
         </section>
 
         <Button
-          onClick={() => update.mutate({ thesisMarkdown })}
+          onClick={() => {
+            if (
+              confirm(
+                "Overwriting the thesis changes how every future deal gets scored — and how every existing deal would re-score on refresh. Continue?",
+              )
+            ) {
+              update.mutate({ thesisMarkdown });
+            }
+          }}
           disabled={update.isPending}
         >
           {update.isPending ? "Saving…" : "Save"}

@@ -3,7 +3,7 @@ import { router, publicProcedure } from "../trpc";
 import { db } from "../db";
 import { logActivity } from "../services/activity-log";
 import { parseCompanyUrl } from "../services/url-parse";
-import { scoreCompanyFit } from "../services/research-engine";
+import { researchCompany } from "../services/research-engine";
 
 const CompanyStatusEnum = z.enum([
   "Sourced",
@@ -71,8 +71,9 @@ export const companiesRouter = router({
         companyId: company.id,
         payload: { sourceUrl: input.sourceUrl ?? null },
       });
-      // Fire-and-forget — don't block creation on AI latency.
-      void scoreCompanyFit(company.id);
+      // Fire-and-forget — don't block creation on AI latency. researchCompany
+      // chains the 4 web_search queries + fact/founder extraction + scoring.
+      void researchCompany(company.id);
       return company;
     }),
 
@@ -146,8 +147,9 @@ export const companiesRouter = router({
         companyId: company.id,
         payload: { sourceUrl: parsed.url, via: "single-url-drop" },
       });
-      // Fire-and-forget — don't block creation on AI latency.
-      void scoreCompanyFit(company.id);
+      // Fire-and-forget — don't block creation on AI latency. researchCompany
+      // chains the 4 web_search queries + fact/founder extraction + scoring.
+      void researchCompany(company.id);
       return company;
     }),
 });

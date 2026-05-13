@@ -6,19 +6,17 @@ import { useEffect, useState } from "react";
 import {
   Building2,
   PieChart,
+  Compass,
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./theme-toggle";
 
-// Thesis editing route (/settings) is deliberately not linked from the
-// sidebar during the demo. The page is publicly writable and the textarea
-// is one accidental save from corrupting the 9-principle scoring rubric.
-// Once auth lands, surface the link again.
 const NAV_ITEMS = [
   { href: "/companies", label: "Deals", icon: Building2 },
   { href: "/funnel", label: "Conversion", icon: PieChart },
+  { href: "/settings", label: "Thesis", icon: Compass },
 ];
 
 const STORAGE_KEY = "sonar.sidebar.collapsed";
