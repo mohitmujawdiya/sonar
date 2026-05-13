@@ -43,7 +43,7 @@ function CardChrome({
         </button>
         <div className="flex-1 min-w-0">
           <Link
-            href={`/companies/${company.id}`}
+            href={`/deals/${company.id}`}
             className="font-medium text-sm hover:underline truncate block"
           >
             {company.name}

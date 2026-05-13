@@ -68,7 +68,7 @@ src/
     landing/                      — public-facing hero for Evan
     companies/, companies/[id]/   — kanban + deal detail (3 tabs)
     companies/new/                — paste-a-founder evaluation flow
-    settings/, funnel/            — Thesis editor (confirm-on-save) + Conversion page
+    settings/, conversion/        — Thesis editor (confirm-on-save) + Conversion page
   components/
     companies/quanta-fit-scorecard.tsx   — the hero scorecard component
   server/

@@ -10,7 +10,7 @@ export default function DealsPage() {
         title="Deals"
         actions={
           <Button asChild size="sm">
-            <Link href="/companies/new">+ Add deal</Link>
+            <Link href="/deals/new">+ Add deal</Link>
           </Button>
         }
       />

@@ -250,7 +250,7 @@ The scorecard is rendered as a 9-card grid on the deal detail page — the hero 
 
 ## 8. Onboarding flow — paste a founder URL
 
-`/companies/new` is the single onboarding path. One text field: paste any of —
+`/deals/new` is the single onboarding path. One text field: paste any of —
 
 - **LinkedIn profile** — `linkedin.com/in/handle` → URL parser extracts the handle.
 - **X/Twitter profile** — `x.com/handle` or `twitter.com/handle` → handle extracted.
@@ -278,20 +278,20 @@ This is a single-user demo with no auth. The non-trivial risks and how they're h
 ## 10. UI surface
 
 ### Sidebar (3 items)
-- **Deals** — `/companies` (kanban)
-- **Conversion** — `/funnel`
-- **Thesis** — `/settings`
+- **Conversion** — `/conversion`
+- **Deals** — `/deals` (kanban)
+- **Thesis** — `/thesis`
 
 ### Pages
 - `/` — Public-facing landing for Evan (hero, "three deliberate omissions", lineage, footer mailto). The bare URL is what gets shared, so the landing IS the home. `/landing` redirects here for backward compatibility with prior links.
-- `/companies/new` — paste a founder URL → evaluate
-- `/companies` — kanban with 5 columns (Sourced / Researched / Watching / Met / Passed), drag-and-drop with optimistic updates + rollback on failure
-- `/companies/[id]` — 3 tabs:
+- `/deals/new` — paste a founder URL → evaluate
+- `/deals` — kanban with 5 columns (Sourced / Researched / Watching / Met / Passed), drag-and-drop with optimistic updates + rollback on failure
+- `/deals/[id]` — 3 tabs:
   - **Research** — overview + momentum + founder content + founder pedigree (with citations); plus a Founders section showing seeded Contact rows
   - **Quanta Fit** — the 9-principle scorecard (hero)
   - **Notes** — private free-text, markdown-rendered
-- `/funnel` — conversion snapshot
-- `/settings` — Thesis editor with **confirm-on-save** (overwriting the rubric changes how every future deal scores)
+- `/conversion` — pipeline snapshot, forward-funnel conversion rates, and median time-to-advance per stage
+- `/thesis` — Thesis editor with **confirm-on-save** (overwriting the rubric changes how every future deal scores)
 
 ### Kanban card composition
 

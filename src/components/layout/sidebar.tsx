@@ -14,9 +14,9 @@ import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./theme-toggle";
 
 const NAV_ITEMS = [
-  { href: "/companies", label: "Deals", icon: Building2 },
-  { href: "/funnel", label: "Conversion", icon: PieChart },
-  { href: "/settings", label: "Thesis", icon: Compass },
+  { href: "/conversion", label: "Conversion", icon: PieChart },
+  { href: "/deals", label: "Deals", icon: Building2 },
+  { href: "/thesis", label: "Thesis", icon: Compass },
 ];
 
 const STORAGE_KEY = "sonar.sidebar.collapsed";

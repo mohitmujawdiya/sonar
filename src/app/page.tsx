@@ -24,13 +24,13 @@ export default function LandingPage() {
           </p>
           <div className="flex gap-3 pt-2">
             <Button asChild size="lg">
-              <Link href="/companies/new">
+              <Link href="/deals/new">
                 <Search className="size-4" />
                 Evaluate a founder
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline">
-              <Link href="/companies">
+              <Link href="/deals">
                 Open the kanban
                 <ExternalLink className="size-4" />
               </Link>
@@ -66,7 +66,7 @@ export default function LandingPage() {
         <section className="space-y-4 max-w-2xl">
           <h2 className="text-2xl font-semibold tracking-tight">The 9 principles</h2>
           <p className="text-base text-muted-foreground leading-relaxed">
-            Pulled verbatim from Quanta&apos;s culture page. Each one operationalized into a scoring rubric the model reads at evaluation time. Edit the rubric in <Link href="/settings" className="underline hover:text-foreground">Thesis</Link>; new scores reflect the change.
+            Pulled verbatim from Quanta&apos;s culture page. Each one operationalized into a scoring rubric the model reads at evaluation time. Edit the rubric in <Link href="/thesis" className="underline hover:text-foreground">Thesis</Link>; new scores reflect the change.
           </p>
           <ul className="grid gap-2 sm:grid-cols-3 text-sm">
             {[

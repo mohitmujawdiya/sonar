@@ -55,7 +55,7 @@ export function CompanyTabs({ company }: { company: Company }) {
     },
     onSuccess: () => {
       toast.success("Deal removed");
-      window.location.href = "/companies";
+      window.location.href = "/deals";
     },
   });
 

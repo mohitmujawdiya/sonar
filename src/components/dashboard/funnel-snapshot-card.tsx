@@ -49,7 +49,7 @@ export function FunnelSnapshotCard() {
           </div>
         </dl>
         <Button asChild size="sm" variant="outline">
-          <Link href="/companies">Open kanban →</Link>
+          <Link href="/deals">Open kanban →</Link>
         </Button>
       </CardContent>
     </Card>

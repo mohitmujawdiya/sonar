@@ -17,7 +17,7 @@ export function AddViaUrl() {
   const create = trpc.companies.createFromUrl.useMutation({
     onSuccess: (company) => {
       toast.success(`${company.name} added — research firing`);
-      router.push(`/companies/${company.id}`);
+      router.push(`/deals/${company.id}`);
     },
     onError: (e) => toast.error(e.message),
   });
