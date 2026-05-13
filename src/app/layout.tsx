@@ -4,8 +4,8 @@ import { Providers } from "./providers";
 import { Sidebar } from "@/components/layout/sidebar";
 
 export const metadata: Metadata = {
-  title: "Narad",
-  description: "Outbound job-search engine",
+  title: "Sonar",
+  description: "Founder evaluation for venture sourcing",
 };
 
 export default function RootLayout({

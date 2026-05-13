@@ -29,7 +29,7 @@ const NAV_ITEMS = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
-const STORAGE_KEY = "narad.sidebar.collapsed";
+const STORAGE_KEY = "sonar.sidebar.collapsed";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -73,8 +73,8 @@ export function Sidebar() {
       >
         {!collapsed && (
           <Link href="/" className="flex flex-col leading-tight overflow-hidden">
-            <span className="font-semibold text-lg tracking-tight">Narad</span>
-            <span className="text-xs text-muted-foreground">Outbound engine</span>
+            <span className="font-semibold text-lg tracking-tight">Sonar</span>
+            <span className="text-xs text-muted-foreground">Founder evaluation</span>
           </Link>
         )}
         <button

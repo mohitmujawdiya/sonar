@@ -1,59 +1,51 @@
-# Narad
+# Sonar
 
-Outbound + inbound job pipeline GUI. Built on Hannibal stack (Next.js 16 + Prisma + tRPC + shadcn). Single-user local app.
+> A sourcing engine for pre-VC AI-native founders, scored against Quanta Ventures' 9 culture principles.
 
-## Status
+**Live demo:** _(deploy URL goes here after Vercel setup)_
 
-- ✅ **Plan A1 (this state):** Manual daily ritual works — companies/contacts CRUD, message editor with templates, queue UI with keyboard, mailto/clipboard/plain-log send, manual reply logging, CareerOps profile sync.
-- ⏳ **Plan A2 (next):** Perplexity research, Claude AI drafting, confidence scoring, sourcing parsers (YC/Wellfound/CSV).
-- ⏳ **Plan A3:** Gmail OAuth + automated send + reply polling, multi-touch sequences/cadence engine, funnel analytics.
-- ⏳ **Phase B:** JD evaluation port, CV tailoring, cover letter, applications view, story-bank.
+## What this is
 
-## Setup
+I built a sourcing engine for myself — for a different purpose. This is the same engine pointed at venture sourcing. It scans where AI-native founders ship things *before* they fundraise — HN, GitHub, Hugging Face — researches each, and scores them against Quanta's 9 culture principles.
 
-1. Clone, install:
-   ```
-   pnpm install
-   ```
-2. Copy env, fill in `DATABASE_URL` (Neon free tier works) and `CAREEROPS_PATH`:
-   ```
-   cp .env.example .env.local
-   ```
-3. Migrate + seed:
-   ```
-   pnpm db:migrate
-   pnpm seed
-   ```
-4. Run:
-   ```
-   pnpm dev
-   ```
+The repo is the proof artifact. The hosted demo is where you click around.
+
+## How it works
+
+1. **Scan** — three buttons (HN Show-HN, GitHub trending in AI/ML, Hugging Face trending). Each fires a parallel parser, returns candidates, dedup'd against the existing pipeline.
+2. **Research** — for each company, an OpenAI Responses-API + `web_search` engine produces: company overview, momentum signal (shipping cadence — not ARR), founder content (recent posts/papers/threads), founder pedigree (top 0.01% signals).
+3. **Score** — every founder gets evaluated against all 9 Quanta culture principles. Per-principle output: evidence + citations + signal strength. Composite fitScore 0-100 with reasoning.
+4. **Track** — kanban with 5 stages: Sourced → Researched → Watching → Met → Passed.
+
+No outreach layer. Sonar evaluates; humans contact.
+
+## What's deliberately not in Sonar
+
+- **Crunchbase** — $249/mo minimum, and already-funded companies are a lagging indicator.
+- **Twitter** — API is ~$5K+/yr for usable volume; ToS gray for scraping.
+- **LinkedIn** — account-ban risk + ToS gray.
+- **YC** — already capitalized. We want founders *before* a venture firm has touched them.
+- **Outreach drafting** — different problem; lives in this repo's ancestor (a job-hunt tool called Narad) but isn't here.
+
+Cost-awareness is a sourcing-engine feature, not a limitation.
+
+## Local dev
+
+```
+pnpm install
+cp .env.example .env.local
+# Fill in DATABASE_URL (Neon free tier works), DIRECT_URL, OPENAI_API_KEY
+pnpm db:migrate
+pnpm seed
+pnpm dev
+```
 
 Visit http://localhost:3000.
 
-## Daily ritual (Plan A1 manual mode)
+## Stack
 
-1. **Settings** → set CareerOps path → **Sync CV + profile.yml**.
-2. **Companies → Add company** → paste URL.
-3. Open the company → **Add contact** → fill in name, role, email, LinkedIn URL.
-4. Open the contact → **Draft message** → pick a template, edit, save to queue.
-5. **Queue** → review (↑ edit · → send · ← skip).
-6. Send via mailto (opens mail client) / clipboard+LinkedIn (copies + opens profile) / plain-log (just records).
-7. **Inbox** → log replies as they come in.
+Next.js 16 · React 19 · TypeScript · Prisma 7 · Postgres (Neon) · tRPC v11 · Tailwind v4 · shadcn · OpenAI Responses API · Vercel.
 
-## Tests
+## Lineage
 
-```
-pnpm test
-```
-
-## Commands
-
-| | |
-|---|---|
-| `pnpm dev` | Run Next.js dev server |
-| `pnpm build` | Production build |
-| `pnpm test` | Run vitest |
-| `pnpm db:migrate` | Run Prisma migrations |
-| `pnpm db:studio` | Open Prisma Studio |
-| `pnpm seed` | Re-seed default templates and sequence |
+Forked from [Narad](https://github.com/mohit/narad) at the commit before its SQLite redesign. Narad was an outbound job-hunt pipeline; the same engine — research, score, track — generalizes to venture sourcing.
