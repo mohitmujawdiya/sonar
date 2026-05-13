@@ -5,8 +5,15 @@ import {
   companyOverviewPrompt,
   momentumSignalPrompt,
   founderContentPrompt,
+  founderPedigreePrompt,
   type CompanyContext,
 } from "./ai/prompts/company-research";
+import {
+  DEFAULT_QUANTA_PRINCIPLES,
+  quantaFitSystemPrompt,
+  quantaFitUserPrompt,
+  type QuantaPrinciple,
+} from "./ai/prompts/quanta-fit";
 import { logActivity } from "./activity-log";
 import type { ResearchResult } from "./ai/types";
 import { openaiJson } from "./ai/openai-chat";
@@ -14,12 +21,13 @@ import { openaiJson } from "./ai/openai-chat";
 const CACHE_TTL_DAYS = 14;
 const CACHE_TTL_MS = CACHE_TTL_DAYS * 24 * 60 * 60 * 1000;
 
-type ResearchKind = "overview" | "momentumSignal" | "founderContent";
+type ResearchKind = "overview" | "momentumSignal" | "founderContent" | "founderPedigree";
 
 const PROMPT_BUILDERS: Record<ResearchKind, (c: CompanyContext) => string> = {
   overview: companyOverviewPrompt,
   momentumSignal: momentumSignalPrompt,
   founderContent: founderContentPrompt,
+  founderPedigree: founderPedigreePrompt,
 };
 
 export async function researchCompany(companyId: string): Promise<void> {
@@ -34,7 +42,7 @@ async function runResearch(companyId: string, opts: { useCache: boolean }): Prom
   const company = await db.company.findUniqueOrThrow({ where: { id: companyId } });
   const ctx: CompanyContext = { name: company.name, domain: company.domain };
 
-  const kinds: ResearchKind[] = ["overview", "momentumSignal", "founderContent"];
+  const kinds: ResearchKind[] = ["overview", "momentumSignal", "founderContent", "founderPedigree"];
 
   const results = await Promise.all(
     kinds.map(async (kind) => {
@@ -82,6 +90,7 @@ async function runResearch(companyId: string, opts: { useCache: boolean }): Prom
       overview: serializeResult(byKind.overview),
       momentumSignal: serializeResult(byKind.momentumSignal),
       founderContent: serializeResult(byKind.founderContent),
+      founderPedigree: serializeResult(byKind.founderPedigree),
       refreshedAt: new Date(),
       expiresAt: new Date(Date.now() + CACHE_TTL_MS),
     },
@@ -90,6 +99,7 @@ async function runResearch(companyId: string, opts: { useCache: boolean }): Prom
       overview: serializeResult(byKind.overview),
       momentumSignal: serializeResult(byKind.momentumSignal),
       founderContent: serializeResult(byKind.founderContent),
+      founderPedigree: serializeResult(byKind.founderPedigree),
       expiresAt: new Date(Date.now() + CACHE_TTL_MS),
     },
   });
@@ -109,7 +119,7 @@ async function runResearch(companyId: string, opts: { useCache: boolean }): Prom
     console.warn("extractCompanyFactsFromOverview skipped:", (e as Error).message);
   });
   await scoreCompanyFit(companyId).catch((e) => {
-    console.warn("post-research fit score skipped:", (e as Error).message);
+    console.warn("post-research quanta-fit skipped:", (e as Error).message);
   });
 }
 
@@ -127,7 +137,7 @@ export async function extractCompanyFactsFromOverview(
     sector: string | null;
   }>({
     system:
-      'Extract structured company facts from a research overview. Return JSON only: {"headcount": <integer or null>, "stage": <string or null>, "sector": <string or null>}. headcount is the best estimate as an integer (e.g., 250 for "200-300 employees"). stage is one of: "pre-seed", "seed", "series-a", "series-b", "series-c", "series-d+", "growth", "public", "private". sector is a short descriptor (e.g., "AI infra", "developer tools", "fintech"). Use null if a fact is not present. Do not invent.',
+      'Extract structured company facts from a research overview. Return JSON only: {"headcount": <integer or null>, "stage": <string or null>, "sector": <string or null>}. headcount is the best estimate as an integer. stage is one of: "pre-seed", "seed", "series-a", "series-b", "series-c", "series-d+", "growth", "public", "private". sector is a short descriptor (e.g., "AI infra", "developer tools", "fintech"). Use null if a fact is not present. Do not invent.',
     user: `Overview text:\n\n${overviewText.slice(0, 4000)}`,
     model: "gpt-5.4-mini",
     maxTokens: 200,
@@ -141,6 +151,79 @@ export async function extractCompanyFactsFromOverview(
       sector: company.sector ?? result.data.sector ?? undefined,
     },
   });
+}
+
+export type QuantaFitOutput = {
+  compositeScore: number;
+  compositeReasoning: string;
+  principles: Array<{
+    name: string;
+    signal: "strong" | "weak" | "unknown";
+    evidence: string;
+    reasoning: string;
+  }>;
+};
+
+export async function scoreCompanyFit(companyId: string): Promise<QuantaFitOutput | null> {
+  const company = await db.company.findUniqueOrThrow({
+    where: { id: companyId },
+    include: { research: true },
+  });
+
+  if (!company.research) return null;
+
+  const profile = await db.profile.findUnique({ where: { id: "singleton" } });
+
+  const principles = (profile?.theses as unknown as QuantaPrinciple[] | null)?.length
+    ? (profile!.theses as unknown as QuantaPrinciple[])
+    : DEFAULT_QUANTA_PRINCIPLES;
+
+  const r = company.research;
+  const research = {
+    overview: extractText(r.overview),
+    momentumSignal: extractText(r.momentumSignal),
+    founderContent: extractText(r.founderContent),
+    founderPedigree: extractText(r.founderPedigree),
+  };
+
+  const result = await openaiJson<QuantaFitOutput>({
+    system: quantaFitSystemPrompt(principles),
+    user: quantaFitUserPrompt({
+      companyName: company.name,
+      thesisMarkdown: profile?.thesisMarkdown ?? null,
+      principles,
+      research,
+    }),
+    model: "gpt-5.5",
+    maxTokens: 2500,
+  });
+
+  const score = clamp(Math.round(result.data.compositeScore), 0, 100);
+
+  await db.companyResearch.update({
+    where: { companyId },
+    data: { quantaFit: result.data as unknown as object },
+  });
+
+  await db.company.update({
+    where: { id: companyId },
+    data: { fitScore: score, fitReason: result.data.compositeReasoning.slice(0, 280) },
+  });
+
+  await logActivity({
+    type: "scored",
+    companyId,
+    payload: { compositeScore: score },
+  });
+
+  return result.data;
+}
+
+function extractText(field: unknown): string | null {
+  if (!field || typeof field !== "object") return null;
+  const r = field as { text?: unknown };
+  if (typeof r.text !== "string") return null;
+  return r.text;
 }
 
 function hashQuery(input: { companyId: string; kind: string; prompt: string }): string {
@@ -157,8 +240,6 @@ function serializeResult(r: ResearchResult): object {
   };
 }
 
-// Stub. The Quanta-fit scorer lands in the AI-prompts task; this returns null
-// for now so callers can stay wired up.
-export async function scoreCompanyFit(_companyId: string): Promise<null> {
-  return null;
+function clamp(n: number, lo: number, hi: number): number {
+  return Math.min(hi, Math.max(lo, n));
 }

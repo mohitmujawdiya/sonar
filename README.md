@@ -48,4 +48,4 @@ Next.js 16 · React 19 · TypeScript · Prisma 7 · Postgres (Neon) · tRPC v11 
 
 ## Lineage
 
-Forked from [Narad](https://github.com/mohit/narad) at the commit before its SQLite redesign. Narad was an outbound job-hunt pipeline; the same engine — research, score, track — generalizes to venture sourcing.
+Forked from Narad (Mohit's outbound job-hunt pipeline) at the commit before its SQLite redesign. The job-hunt project was an outbound CRM with AI research, fit scoring, and drafting; the same engine — research, score, track — generalizes to venture sourcing.
