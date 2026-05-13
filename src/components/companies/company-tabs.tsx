@@ -98,7 +98,6 @@ export function CompanyTabs({ company }: { company: Company }) {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="research">Research</TabsTrigger>
           <TabsTrigger value="contacts">Contacts ({company.contacts.length})</TabsTrigger>
-          <TabsTrigger value="outreach">Outreach</TabsTrigger>
           <TabsTrigger value="notes">Notes</TabsTrigger>
         </TabsList>
 
@@ -134,19 +133,16 @@ export function CompanyTabs({ company }: { company: Company }) {
               {company.contacts.map((c) => (
                 <li key={c.id} className="px-3 py-2 flex items-center justify-between">
                   <div>
-                    <Link href={`/contacts/${c.id}`} className="font-medium hover:underline">{c.name}</Link>
+                    <p className="font-medium">{c.name}</p>
                     <p className="text-xs text-muted-foreground">{c.role ?? "—"}</p>
                   </div>
-                  <span className="text-xs text-muted-foreground">{c.touchpoints?.length ?? 0} touchpoint{(c.touchpoints?.length ?? 0) === 1 ? "" : "s"}</span>
+                  {c.linkedinUrl && (
+                    <a href={c.linkedinUrl} target="_blank" rel="noopener" className="text-xs text-muted-foreground hover:text-foreground">LinkedIn ↗</a>
+                  )}
                 </li>
               ))}
             </ul>
           )}
-        </TabsContent>
-
-        <TabsContent value="outreach" className="space-y-2">
-          {/* Lists touchpoints; populated in later tasks */}
-          <p className="text-sm text-muted-foreground">Outreach feed lands in Task 21+.</p>
         </TabsContent>
 
         <TabsContent value="notes" className="space-y-2">

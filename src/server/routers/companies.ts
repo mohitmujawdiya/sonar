@@ -6,12 +6,11 @@ import { parseCompanyUrl } from "../services/url-parse";
 import { scoreCompanyFit } from "../services/research-engine";
 
 const CompanyStatusEnum = z.enum([
-  "Discovered",
+  "Sourced",
   "Researched",
-  "Targeting",
-  "Active",
-  "Paused",
-  "Disqualified",
+  "Watching",
+  "Met",
+  "Passed",
 ]);
 
 export const companiesRouter = router({
@@ -46,7 +45,7 @@ export const companiesRouter = router({
       return db.company.findUniqueOrThrow({
         where: { id: input.id },
         include: {
-          contacts: { include: { touchpoints: { include: { message: true } } } },
+          contacts: true,
           research: true,
           lists: { include: { list: true } },
         },

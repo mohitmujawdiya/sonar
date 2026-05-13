@@ -9,10 +9,7 @@ export const contactsRouter = router({
     .query(async ({ input }) => {
       return db.contact.findUniqueOrThrow({
         where: { id: input.id },
-        include: {
-          company: true,
-          touchpoints: { include: { message: true }, orderBy: { createdAt: "desc" } },
-        },
+        include: { company: true },
       });
     }),
 

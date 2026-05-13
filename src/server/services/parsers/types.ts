@@ -18,7 +18,7 @@ export type ParseResult =
   | { kind: "empty"; format: ParserFormat | null }
   | { kind: "error"; format: ParserFormat | null; message: string };
 
-export type ParserFormat = "yc-batch" | "wellfound" | "csv" | "url-list" | "single-url";
+export type ParserFormat = "url-list" | "single-url";
 
 export interface SourceParser {
   readonly format: ParserFormat;

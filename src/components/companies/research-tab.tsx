@@ -116,7 +116,7 @@ export function ResearchTab({ companyId }: { companyId: string }) {
         <RefreshResearchButton companyId={companyId} />
       </div>
       <Section title="Overview" entry={research.data.overview as ResearchEntry | null} />
-      <Section title="Hiring signal" entry={research.data.hiringSignal as ResearchEntry | null} />
+      <Section title="Momentum signal" entry={research.data.momentumSignal as ResearchEntry | null} />
       <Section title="Founder content" entry={research.data.founderContent as ResearchEntry | null} />
     </div>
   );
