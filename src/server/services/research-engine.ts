@@ -115,9 +115,16 @@ async function runResearch(companyId: string, opts: { useCache: boolean }): Prom
     payload: { kinds },
   });
 
-  await extractCompanyFactsFromOverview(companyId, byKind.overview?.text ?? "").catch((e) => {
-    console.warn("extractCompanyFactsFromOverview skipped:", (e as Error).message);
-  });
+  // Facts and founders are independent overview-extraction passes — run them in
+  // parallel to shave ~5s off the post-research wait.
+  await Promise.all([
+    extractCompanyFactsFromOverview(companyId, byKind.overview?.text ?? "").catch((e) => {
+      console.warn("extractCompanyFactsFromOverview skipped:", (e as Error).message);
+    }),
+    extractFoundersFromOverview(companyId, byKind.overview?.text ?? "").catch((e) => {
+      console.warn("extractFoundersFromOverview skipped:", (e as Error).message);
+    }),
+  ]);
   await scoreCompanyFit(companyId).catch((e) => {
     console.warn("post-research quanta-fit skipped:", (e as Error).message);
   });
@@ -151,6 +158,42 @@ export async function extractCompanyFactsFromOverview(
       sector: company.sector ?? result.data.sector ?? undefined,
     },
   });
+}
+
+export async function extractFoundersFromOverview(
+  companyId: string,
+  overviewText: string,
+): Promise<void> {
+  if (!overviewText.trim()) return;
+
+  const existingContacts = await db.contact.findMany({
+    where: { companyId },
+    select: { name: true },
+  });
+  const existingNames = new Set(existingContacts.map((c) => c.name.toLowerCase()));
+
+  const result = await openaiJson<{
+    founders: Array<{ name: string; role: string | null; linkedinUrl: string | null }>;
+  }>({
+    system:
+      'Extract founder/co-founder names from a company research overview. Return JSON only: {"founders": [{"name": "<full name>", "role": "<title like Founder, CEO, CTO, or null>", "linkedinUrl": "<full URL or null>"}]}. Include only people the overview explicitly identifies as founders, co-founders, or in named founding-team roles (e.g., "founding engineer", "CEO and co-founder"). Use null when a field is not in the text. Do not invent people. If no founders are findable, return {"founders": []}.',
+    user: `Overview text:\n\n${overviewText.slice(0, 4000)}`,
+    model: "gpt-5.4-mini",
+    maxTokens: 500,
+  });
+
+  for (const founder of result.data.founders) {
+    if (!founder.name?.trim()) continue;
+    if (existingNames.has(founder.name.trim().toLowerCase())) continue;
+    await db.contact.create({
+      data: {
+        companyId,
+        name: founder.name.trim(),
+        role: founder.role?.trim() || "Founder",
+        linkedinUrl: founder.linkedinUrl?.trim() || null,
+      },
+    });
+  }
 }
 
 export type QuantaFitOutput = {
