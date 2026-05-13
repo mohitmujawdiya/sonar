@@ -5,20 +5,19 @@ import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { type RouterOutputs } from "@/lib/trpc-types";
-import Link from "next/link";
 import { AddContactDialog } from "@/components/contacts/add-contact-dialog";
 import { ResearchTab } from "./research-tab";
+import { QuantaFitTab } from "./quanta-fit-tab";
 import { Markdown } from "@/components/ui/markdown";
 
 type Company = RouterOutputs["companies"]["byId"];
+
+const NEXT_STAGES = ["Researched", "Watching", "Met", "Passed"] as const;
 
 export function CompanyTabs({ company }: { company: Company }) {
   const utils = trpc.useUtils();
   const setStatus = trpc.companies.setStatus.useMutation({
     onMutate: async ({ id, status }) => {
-      // Optimistic — flip the status in the byId cache so the active button
-      // highlights instantly. Also flip in the kanban list cache so when the
-      // user navigates back to /companies the new status is already shown.
       await Promise.all([
         utils.companies.byId.cancel({ id }),
         utils.companies.list.cancel(),
@@ -39,7 +38,6 @@ export function CompanyTabs({ company }: { company: Company }) {
       toast.error(err.message);
     },
     onSettled: () => {
-      // Re-sync with server truth in the background.
       void utils.companies.byId.invalidate({ id: company.id });
       void utils.companies.list.invalidate();
     },
@@ -56,7 +54,7 @@ export function CompanyTabs({ company }: { company: Company }) {
       toast.error(err.message);
     },
     onSuccess: () => {
-      toast.success("Company removed");
+      toast.success("Deal removed");
       window.location.href = "/companies";
     },
   });
@@ -64,15 +62,28 @@ export function CompanyTabs({ company }: { company: Company }) {
   return (
     <div className="space-y-4 p-6">
       <header className="flex items-start justify-between gap-4">
-        <div>
+        <div className="space-y-1">
           <h2 className="text-xl font-semibold">{company.name}</h2>
           <p className="text-sm text-muted-foreground">
             {company.domain ?? "no domain"}{company.sector && ` · ${company.sector}`}
             {company.stage && ` · ${company.stage}`}
           </p>
+          <div className="flex gap-3 text-xs text-muted-foreground pt-1">
+            {company.headcount !== null && <span>{company.headcount} people</span>}
+            {company.fitScore !== null && (
+              <span>
+                Quanta fit:&nbsp;<span className="font-medium text-foreground">{company.fitScore}/100</span>
+              </span>
+            )}
+            {company.sourceUrl && (
+              <a href={company.sourceUrl} target="_blank" rel="noopener" className="underline hover:text-foreground">
+                source ↗
+              </a>
+            )}
+          </div>
         </div>
         <div className="flex gap-2">
-          {(["Targeting", "Active", "Paused", "Disqualified"] as const).map((s) => (
+          {NEXT_STAGES.map((s) => (
             <Button
               key={s}
               variant={company.status === s ? "default" : "outline"}
@@ -86,63 +97,55 @@ export function CompanyTabs({ company }: { company: Company }) {
             variant="ghost"
             size="sm"
             disabled={remove.isPending}
-            onClick={() => confirm("Remove?") && remove.mutate({ id: company.id })}
+            onClick={() => confirm("Remove this deal?") && remove.mutate({ id: company.id })}
           >
             {remove.isPending ? "Removing…" : "Remove"}
           </Button>
         </div>
       </header>
 
-      <Tabs defaultValue="overview">
+      <Tabs defaultValue="research">
         <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="research">Research</TabsTrigger>
-          <TabsTrigger value="contacts">Contacts ({company.contacts.length})</TabsTrigger>
+          <TabsTrigger value="quanta-fit">Quanta fit</TabsTrigger>
           <TabsTrigger value="notes">Notes</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-2">
-          <p className="text-sm">
-            <strong>Source:</strong>{" "}
-            {company.sourceUrl ? (
-              <a href={company.sourceUrl} className="underline">
-                {company.sourceUrl}
-              </a>
-            ) : (
-              "—"
-            )}
-          </p>
-          <p className="text-sm">
-            <strong>Headcount:</strong> {company.headcount ?? "—"}
-          </p>
-          <p className="text-sm">
-            <strong>Fit score:</strong> {company.fitScore ?? "—"}
-          </p>
-        </TabsContent>
-
-        <TabsContent value="research" className="space-y-2">
+        <TabsContent value="research" className="space-y-4">
           <ResearchTab companyId={company.id} />
+
+          <section className="space-y-2 rounded-md border border-border bg-card p-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-medium text-sm">Founders ({company.contacts.length})</h3>
+              <AddContactDialog companyId={company.id} />
+            </div>
+            {company.contacts.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No founders linked yet. Add one to surface their LinkedIn and Twitter on this card.</p>
+            ) : (
+              <ul className="divide-y border rounded-md">
+                {company.contacts.map((c) => (
+                  <li key={c.id} className="px-3 py-2 flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-sm">{c.name}</p>
+                      <p className="text-xs text-muted-foreground">{c.role ?? "—"}</p>
+                    </div>
+                    <div className="flex gap-3 text-xs text-muted-foreground">
+                      {c.linkedinUrl && (
+                        <a href={c.linkedinUrl} target="_blank" rel="noopener" className="hover:text-foreground">LinkedIn ↗</a>
+                      )}
+                      {c.twitterUrl && (
+                        <a href={c.twitterUrl} target="_blank" rel="noopener" className="hover:text-foreground">X ↗</a>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         </TabsContent>
 
-        <TabsContent value="contacts" className="space-y-3">
-          <AddContactDialog companyId={company.id} />
-          {company.contacts.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No contacts yet.</p>
-          ) : (
-            <ul className="divide-y border rounded-md">
-              {company.contacts.map((c) => (
-                <li key={c.id} className="px-3 py-2 flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">{c.name}</p>
-                    <p className="text-xs text-muted-foreground">{c.role ?? "—"}</p>
-                  </div>
-                  {c.linkedinUrl && (
-                    <a href={c.linkedinUrl} target="_blank" rel="noopener" className="text-xs text-muted-foreground hover:text-foreground">LinkedIn ↗</a>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
+        <TabsContent value="quanta-fit" className="space-y-2">
+          <QuantaFitTab companyId={company.id} />
         </TabsContent>
 
         <TabsContent value="notes" className="space-y-2">

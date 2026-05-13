@@ -14,7 +14,7 @@ type ResearchEntry = {
   meta?: { provider: string; model: string; latencyMs: number };
 };
 
-const SECTION_TITLES = ["Overview", "Hiring signal", "Founder content"] as const;
+const SECTION_TITLES = ["Overview", "Momentum signal", "Founder content", "Founder pedigree"] as const;
 
 function Section({ title, entry }: { title: string; entry: ResearchEntry | null }) {
   if (!entry) return null;
@@ -52,24 +52,13 @@ export function ResearchTab({ companyId }: { companyId: string }) {
   const research = trpc.research.byCompanyId.useQuery({ companyId });
   const utils = trpc.useUtils();
 
-  // Detect any in-flight research mutations across the whole app — survives
-  // tab unmount/remount, so switching away and back during research still
-  // shows the skeleton instead of the empty "Run research" state.
-  const ensuringCount = useIsMutating({
-    mutationKey: [["research", "ensure"]],
-  });
-  const refreshingCount = useIsMutating({
-    mutationKey: [["research", "refresh"]],
-  });
+  const ensuringCount = useIsMutating({ mutationKey: [["research", "ensure"]] });
+  const refreshingCount = useIsMutating({ mutationKey: [["research", "refresh"]] });
   const isResearching = ensuringCount > 0 || refreshingCount > 0;
 
   const ensure = trpc.research.ensure.useMutation({
     onSuccess: () => {
-      // Invalidate the query key directly (not via local refetch) so the
-      // refresh works even if the user has navigated away from this tab.
       void utils.research.byCompanyId.invalidate({ companyId });
-      // Also invalidate the company itself — research extracts headcount,
-      // stage, sector, fit score; the Overview tab needs to refetch.
       void utils.companies.byId.invalidate({ id: companyId });
     },
   });
@@ -78,13 +67,11 @@ export function ResearchTab({ companyId }: { companyId: string }) {
     return <p className="text-sm text-muted-foreground">Loading research…</p>;
   }
 
-  // Researching skeleton — covers both the "first run" case (no data yet) AND
-  // the "refresh while data exists" case (data exists but is being replaced).
   if (isResearching) {
     return (
       <div className="space-y-3">
         <div className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-xs text-primary">
-          Researching {SECTION_TITLES.length} sections in parallel via OpenAI web-search. Typically 10–30 seconds. You can switch tabs and come back.
+          Researching {SECTION_TITLES.length} sections in parallel via OpenAI web-search. Typically 15–45 seconds. You can switch tabs and come back.
         </div>
         {SECTION_TITLES.map((title, i) => (
           <SectionSkeleton key={title} title={title} label={`${i + 1} of ${SECTION_TITLES.length}`} />
@@ -97,7 +84,7 @@ export function ResearchTab({ companyId }: { companyId: string }) {
     return (
       <div className="rounded-md border border-dashed border-border p-6 text-center space-y-3">
         <p className="text-sm text-muted-foreground">
-          No research yet. This runs 3 OpenAI web-search queries (overview, hiring signal, founder content) in parallel — takes 10–30 seconds.
+          No research yet. Sonar runs {SECTION_TITLES.length} OpenAI web-search queries in parallel — overview, momentum signal, founder content, founder pedigree — and then scores the team against Quanta&apos;s 9 culture principles. 15–45 seconds.
         </p>
         <Button onClick={() => ensure.mutate({ companyId })} disabled={ensure.isPending}>
           <Sparkles className="size-4" />
@@ -118,6 +105,7 @@ export function ResearchTab({ companyId }: { companyId: string }) {
       <Section title="Overview" entry={research.data.overview as ResearchEntry | null} />
       <Section title="Momentum signal" entry={research.data.momentumSignal as ResearchEntry | null} />
       <Section title="Founder content" entry={research.data.founderContent as ResearchEntry | null} />
+      <Section title="Founder pedigree" entry={research.data.founderPedigree as ResearchEntry | null} />
     </div>
   );
 }

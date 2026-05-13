@@ -17,12 +17,11 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 const COLUMNS = [
-  { id: "Discovered", label: "Discovered" },
+  { id: "Sourced", label: "Sourced" },
   { id: "Researched", label: "Researched" },
-  { id: "Targeting", label: "Targeting" },
-  { id: "Active", label: "Active" },
-  { id: "Paused", label: "Paused" },
-  { id: "Disqualified", label: "Disqualified" },
+  { id: "Watching", label: "Watching" },
+  { id: "Met", label: "Met" },
+  { id: "Passed", label: "Passed" },
 ] as const;
 
 type ColumnStatus = (typeof COLUMNS)[number]["id"];
@@ -137,7 +136,7 @@ export function Kanban() {
 function KanbanSkeleton() {
   // Vary card counts per column so the empty-state reads like real data
   // is loading rather than a uniform placeholder.
-  const COLUMN_CARD_COUNTS = [3, 2, 2, 1, 0, 0];
+  const COLUMN_CARD_COUNTS = [3, 2, 2, 1, 1];
   return (
     <div className="flex gap-3 p-6 overflow-x-auto h-[calc(100vh-var(--topbar-h))]">
       {COLUMNS.map((col, i) => (

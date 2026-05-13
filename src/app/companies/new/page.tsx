@@ -4,11 +4,11 @@ import { AddViaUrl } from "@/components/companies/add-via-url";
 export default function Page() {
   return (
     <>
-      <Topbar title="Add company" />
+      <Topbar title="Add deal" />
       <div className="p-6">
         <AddViaUrl />
         <p className="text-xs text-muted-foreground mt-12">
-          Bulk paste (YC batch URLs, Wellfound search URLs, CSVs) lands in Plan A2.
+          Sonar will fetch the page, infer the company, and auto-fire all 4 research queries + the Quanta-fit scorecard. Takes 15–45 seconds.
         </p>
       </div>
     </>

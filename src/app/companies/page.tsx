@@ -3,14 +3,14 @@ import { Kanban } from "@/components/companies/kanban";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-export default function CompaniesPage() {
+export default function DealsPage() {
   return (
     <>
       <Topbar
-        title="Companies"
+        title="Deals"
         actions={
           <Button asChild size="sm">
-            <Link href="/companies/new">+ Add company</Link>
+            <Link href="/companies/new">+ Add deal</Link>
           </Button>
         }
       />

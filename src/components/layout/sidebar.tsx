@@ -4,14 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
-  LayoutDashboard,
-  ListTodo,
-  Inbox,
-  Building2,
-  ListOrdered,
   Sparkles,
-  Settings,
+  Building2,
   PieChart,
+  Compass,
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
@@ -19,14 +15,10 @@ import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./theme-toggle";
 
 const NAV_ITEMS = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/queue", label: "Queue", icon: ListTodo },
-  { href: "/inbox", label: "Inbox", icon: Inbox },
-  { href: "/companies", label: "Companies", icon: Building2 },
-  { href: "/sources", label: "Sources", icon: Sparkles },
-  { href: "/sequences", label: "Sequences", icon: ListOrdered },
-  { href: "/funnel", label: "Funnel", icon: PieChart },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/scan", label: "Scan", icon: Sparkles },
+  { href: "/companies", label: "Deals", icon: Building2 },
+  { href: "/funnel", label: "Conversion", icon: PieChart },
+  { href: "/settings", label: "Thesis", icon: Compass },
 ];
 
 const STORAGE_KEY = "sonar.sidebar.collapsed";
@@ -58,15 +50,12 @@ export function Sidebar() {
     <aside
       className={cn(
         "shrink-0 border-r border-sidebar-border bg-sidebar text-sidebar-foreground h-screen sticky top-0 flex flex-col",
-        // Avoid mid-mount layout shift: only animate after first paint.
         mounted && "transition-[width] duration-200 ease-out",
         collapsed ? "w-14" : "w-56"
       )}
     >
       <div
         className={cn(
-          // Same height + same border color as Topbar so the horizontal
-          // line continues seamlessly across the sidebar/main boundary.
           "flex items-center h-[var(--topbar-h)] border-b border-border",
           collapsed ? "justify-center px-2" : "justify-between px-4"
         )}
