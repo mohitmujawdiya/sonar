@@ -1,22 +1,7 @@
-import OpenAI from "openai";
+import { openaiClient } from "./openai-client";
 import { AiError, type ResearchResult, type CitationLink } from "./types";
 
 const DEFAULT_MODEL = "gpt-5.5";
-
-let _client: OpenAI | null = null;
-let _clientApiKey: string | null = null;
-
-function client(): OpenAI {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    throw new AiError("openai", "auth", "OPENAI_API_KEY not set");
-  }
-  if (!_client || _clientApiKey !== apiKey) {
-    _client = new OpenAI({ apiKey });
-    _clientApiKey = apiKey;
-  }
-  return _client;
-}
 
 export type WebResearchRequest = {
   prompt: string;
@@ -43,7 +28,7 @@ export async function webResearch(req: WebResearchRequest): Promise<ResearchResu
 
   let response;
   try {
-    response = await client().responses.create({
+    response = await openaiClient().responses.create({
       model,
       tools: [{ type: "web_search" }],
       input,

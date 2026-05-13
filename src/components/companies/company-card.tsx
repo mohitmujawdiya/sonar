@@ -12,7 +12,6 @@ type Company = {
   sector: string | null;
   fitScore: number | null;
   contacts?: Array<{ id: string; name: string; role: string | null }>;
-  _count?: { contacts: number };
 };
 
 function CardChrome({

@@ -33,7 +33,6 @@ export const companiesRouter = router({
         },
         include: {
           contacts: { select: { id: true, name: true, role: true } },
-          _count: { select: { contacts: true } },
         },
         orderBy: { updatedAt: "desc" },
       });
@@ -92,7 +91,13 @@ export const companiesRouter = router({
       })
     )
     .mutation(async ({ input }) => {
-      return db.company.update({ where: { id: input.id }, data: input.data });
+      const updated = await db.company.update({ where: { id: input.id }, data: input.data });
+      await logActivity({
+        type: "company-updated",
+        companyId: input.id,
+        payload: { fields: Object.keys(input.data) },
+      });
+      return updated;
     }),
 
   setStatus: publicProcedure

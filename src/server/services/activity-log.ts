@@ -3,12 +3,12 @@ import type { Prisma } from "@prisma/client";
 
 export type ActivityType =
   | "company-created"
+  | "company-updated"
   | "company-status-changed"
   | "contact-created"
   | "research-cached"
   | "scored"
-  | "scan-added"
-  | "manual-log";
+  | "scoring-failed";
 
 export async function logActivity(params: {
   type: ActivityType;

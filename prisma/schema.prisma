@@ -33,6 +33,7 @@ model Company {
 
   @@index([status])
   @@index([sector])
+  @@index([fitScore])
 }
 
 enum CompanyStatus {
@@ -123,6 +124,8 @@ model ResearchCache {
   citations Json?
   expiresAt DateTime
   createdAt DateTime @default(now())
+
+  @@index([expiresAt])
 }
 
 // ─────────────────────────────────────────────────────────

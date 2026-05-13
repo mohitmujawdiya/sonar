@@ -115,19 +115,34 @@ async function runResearch(companyId: string, opts: { useCache: boolean }): Prom
     payload: { kinds },
   });
 
-  // Facts and founders are independent overview-extraction passes — run them in
-  // parallel to shave ~5s off the post-research wait.
+  // All three post-research analyses are independent — fact extraction reads
+  // the overview but writes Company.headcount/stage/sector; founder extraction
+  // reads the overview but writes Contact rows; scoring reads only research +
+  // profile and writes quantaFit. None depend on each other's writes, so run
+  // them in parallel to drop ~25-30s off total research time.
+  const overviewText = byKind.overview?.text ?? "";
   await Promise.all([
-    extractCompanyFactsFromOverview(companyId, byKind.overview?.text ?? "").catch((e) => {
+    extractCompanyFactsFromOverview(companyId, overviewText).catch((e) => {
       console.warn("extractCompanyFactsFromOverview skipped:", (e as Error).message);
     }),
-    extractFoundersFromOverview(companyId, byKind.overview?.text ?? "").catch((e) => {
+    extractFoundersFromOverview(companyId, overviewText).catch((e) => {
       console.warn("extractFoundersFromOverview skipped:", (e as Error).message);
     }),
+    scoreCompanyFit(companyId).catch(async (e) => {
+      // Don't just swallow — log to the activity feed so the failure is
+      // visible in the audit trail. Without this, a silent scoring failure
+      // shows up as "research done but no scorecard" with no obvious cause.
+      const message = (e as Error).message;
+      console.warn("post-research quanta-fit skipped:", message);
+      await logActivity({
+        type: "scoring-failed",
+        companyId,
+        payload: { error: message.slice(0, 300) },
+      }).catch(() => {
+        // Best-effort — don't crash on logging failure.
+      });
+    }),
   ]);
-  await scoreCompanyFit(companyId).catch((e) => {
-    console.warn("post-research quanta-fit skipped:", (e as Error).message);
-  });
 }
 
 export async function extractCompanyFactsFromOverview(

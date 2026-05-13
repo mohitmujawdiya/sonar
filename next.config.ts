@@ -2,14 +2,17 @@ import type { NextConfig } from "next";
 
 const isDev = process.env.NODE_ENV === "development";
 
+// CSP: lock to what Sonar actually uses. Self-hosted scripts + styles (Next.js
+// + Tailwind both need 'unsafe-inline'), data: URIs for image fallbacks, and
+// Vercel's first-party telemetry endpoints. 'unsafe-eval' is dev-only for
+// Next.js hot-reload.
 const cspDirectives = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://*.clerk.accounts.dev https://challenges.cloudflare.com`,
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' https://img.clerk.com data:",
+  "img-src 'self' data:",
   "font-src 'self'",
-  "connect-src 'self' https://*.clerk.accounts.dev https://va.vercel-scripts.com https://vitals.vercel-insights.com https://challenges.cloudflare.com",
-  "frame-src https://*.clerk.accounts.dev https://challenges.cloudflare.com",
+  "connect-src 'self' https://va.vercel-scripts.com https://vitals.vercel-insights.com",
   "worker-src 'self' blob:",
   "form-action 'self'",
   "frame-ancestors 'none'",

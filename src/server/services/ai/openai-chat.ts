@@ -1,20 +1,5 @@
-import OpenAI from "openai";
+import { openaiClient } from "./openai-client";
 import { AiError } from "./types";
-
-let _client: OpenAI | null = null;
-let _clientApiKey: string | null = null;
-
-function client(): OpenAI {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    throw new AiError("openai", "auth", "OPENAI_API_KEY not set");
-  }
-  if (!_client || _clientApiKey !== apiKey) {
-    _client = new OpenAI({ apiKey });
-    _clientApiKey = apiKey;
-  }
-  return _client;
-}
 
 export type OpenAIChatModel = "gpt-5.5" | "gpt-5.5-pro" | "gpt-5.4" | "gpt-5.4-mini" | "gpt-5.4-nano" | string;
 
@@ -34,53 +19,67 @@ export type OpenAIJsonResult<T> = {
 /**
  * Calls OpenAI Responses API and parses the result as JSON.
  * Strips ```json fences automatically.
- * Throws AiError("bad-response") if the response can't be parsed.
+ *
+ * If the first attempt returns malformed JSON (most common cause: response
+ * truncation at the token cap), retries once with a 1.5× token budget. This
+ * recovers gracefully from the scenario that bit us with DeepSpace during
+ * initial seeding — the JSON was syntactically valid except for being cut
+ * off mid-string, and the strict parser rejected the whole response.
+ *
+ * Throws AiError("bad-response") if both attempts fail.
  */
 export async function openaiJson<T>(req: OpenAIJsonRequest): Promise<OpenAIJsonResult<T>> {
   const start = Date.now();
-
   const input = req.system ? `${req.system}\n\n${req.user}` : req.user;
+  const baseTokens = req.maxTokens ?? 2048;
 
-  let response;
-  try {
-    response = await client().responses.create({
-      model: req.model,
-      input,
-      max_output_tokens: req.maxTokens ?? 2048,
-      text: { format: { type: "json_object" } },
-    });
-  } catch (e) {
-    const err = e as { status?: number; message?: string };
-    const kind =
-      err.status === 401 || err.status === 403
-        ? "auth"
-        : err.status === 429
-        ? "rate-limit"
-        : "unknown";
-    throw new AiError("openai", kind, err.message ?? "OpenAI Responses request failed", e);
+  let cleaned = "";
+
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const maxTokensThisAttempt = attempt === 1 ? baseTokens : Math.round(baseTokens * 1.5);
+
+    let response;
+    try {
+      response = await openaiClient().responses.create({
+        model: req.model,
+        input,
+        max_output_tokens: maxTokensThisAttempt,
+        text: { format: { type: "json_object" } },
+      });
+    } catch (e) {
+      const err = e as { status?: number; message?: string };
+      const kind =
+        err.status === 401 || err.status === 403
+          ? "auth"
+          : err.status === 429
+          ? "rate-limit"
+          : "unknown";
+      throw new AiError("openai", kind, err.message ?? "OpenAI Responses request failed", e);
+    }
+
+    const text = response.output_text ?? "";
+    cleaned = stripFences(text);
+    try {
+      const data = JSON.parse(cleaned) as T;
+      return {
+        data,
+        meta: {
+          provider: "openai",
+          model: req.model,
+          latencyMs: Date.now() - start,
+        },
+      };
+    } catch {
+      // Fall through to retry. Most common cause: truncation at token cap.
+      // Bumping tokens on retry usually recovers.
+    }
   }
 
-  const text = response.output_text ?? "";
-  const cleaned = stripFences(text);
-  let data: T;
-  try {
-    data = JSON.parse(cleaned) as T;
-  } catch {
-    throw new AiError(
-      "openai",
-      "bad-response",
-      `OpenAI returned non-JSON: ${cleaned.slice(0, 200)}`,
-    );
-  }
-
-  return {
-    data,
-    meta: {
-      provider: "openai",
-      model: req.model,
-      latencyMs: Date.now() - start,
-    },
-  };
+  throw new AiError(
+    "openai",
+    "bad-response",
+    `OpenAI returned non-JSON after retry: ${cleaned.slice(0, 200)}`,
+  );
 }
 
 function stripFences(s: string): string {
