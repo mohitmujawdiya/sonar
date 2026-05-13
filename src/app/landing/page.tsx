@@ -105,7 +105,7 @@ export default function LandingPage() {
 
         <footer className="pt-12 border-t border-border text-xs text-muted-foreground space-y-1">
           <p>Built in 12 hours as the application deliverable for a venture analyst role at Quanta.</p>
-          <p>If you&apos;re reading this and we haven&apos;t talked yet — <a href="mailto:mohit@example.com" className="underline hover:text-foreground">let&apos;s talk</a>.</p>
+          <p>If you&apos;re reading this and we haven&apos;t talked yet — <a href="mailto:sahilmujawdiya@gmail.com" className="underline hover:text-foreground">let&apos;s talk</a>.</p>
         </footer>
       </div>
     </main>
