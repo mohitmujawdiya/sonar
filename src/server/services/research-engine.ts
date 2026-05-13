@@ -195,7 +195,10 @@ export async function scoreCompanyFit(companyId: string): Promise<QuantaFitOutpu
       research,
     }),
     model: "gpt-5.5",
-    maxTokens: 2500,
+    // 9 principles × (evidence + reasoning) + compositeReasoning routinely
+    // exceeded 2500 tokens for verbose deals, truncating the JSON mid-string
+    // and tripping the strict parser. 4000 is comfortable headroom.
+    maxTokens: 4000,
   });
 
   const score = clamp(Math.round(result.data.compositeScore), 0, 100);
