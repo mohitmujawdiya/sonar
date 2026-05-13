@@ -2,7 +2,7 @@
 
 > Paste a founder URL. Get a Quanta-shaped read in 30 seconds.
 
-**Live demo:** _(deploy URL goes here once Vercel is wired up)_
+**Live demo:** https://sonar-eight-zeta.vercel.app/
 
 > Built in 12 hours as the application deliverable for a venture analyst role at Quanta. Read [docs/PLAN.md](docs/PLAN.md) for the full foundation doc — what it is, why, how it's built, what's deliberately not included.
 
@@ -16,10 +16,10 @@ The repo is the proof artifact. The hosted demo is where you click around.
 
 1. **Paste** — a founder URL (LinkedIn `/in/handle`, X/Twitter, GitHub, or a personal site / company homepage).
 2. **Research** — Sonar fires 4 parallel OpenAI `web_search` queries: company overview, momentum signal (shipping cadence — not ARR), founder content (recent posts/papers/threads), founder pedigree (top 0.01% signals).
-3. **Score** — a synthesis prompt evaluates the team against all 9 Quanta culture principles. Per-principle: signal (strong/weak/unknown) + evidence + reasoning. Composite fitScore 0-100.
+3. **Extract + Score (in parallel)** — three independent passes against the research artifacts: structured company facts (headcount/stage/sector), founder name extraction into Contact rows (so the kanban can show "Donald Della Pietra" instead of "linkedin.com/in/donalddellapietra"), and the 9-principle Quanta-fit synthesis.
 4. **Track** — kanban with 5 stages: Sourced → Researched → Watching → Met → Passed.
 
-No outreach layer. Sonar evaluates; humans contact.
+End-to-end: ~30s typical, ~45s on the slow tail. No outreach layer — Sonar evaluates, humans contact.
 
 ## What's deliberately not in Sonar
 
@@ -35,8 +35,9 @@ Cost-awareness is a sourcing-engine feature, not a limitation.
 pnpm install
 cp .env.example .env.local
 # Fill in DATABASE_URL (Neon free tier works), DIRECT_URL, OPENAI_API_KEY
-pnpm db:migrate
-pnpm seed
+pnpm prisma migrate deploy   # apply tracked migrations (0_init, 1_indexes)
+pnpm seed                    # Quanta thesis singleton
+pnpm seed:anchors            # 6 anchor deals through full research pipeline (~3-4 min, costs OpenAI tokens)
 pnpm dev
 ```
 
@@ -44,11 +45,13 @@ Visit `http://localhost:3000`.
 
 ## Deploy to Vercel
 
-1. Create a Neon Postgres project; grab the pooled connection string (DATABASE_URL) and the unpooled one (DIRECT_URL).
+1. Create a Neon Postgres project. Copy the **pooled** connection string (this is `DATABASE_URL`) and the **unpooled** one — strip `-pooler` from the host — for `DIRECT_URL` (used by `prisma migrate deploy`).
 2. Push this repo to GitHub if not already.
-3. Import the repo on Vercel. In project settings → environment variables, add `DATABASE_URL`, `DIRECT_URL`, `OPENAI_API_KEY`.
-4. Add a build command override: `prisma migrate deploy && prisma generate && next build`. (Or run `pnpm db:migrate` locally against the Neon URL first.)
-5. Deploy. After first deploy, run `pnpm seed` once against the Neon URL to populate the Quanta thesis.
+3. Import the repo on Vercel. In project settings → environment variables, add `DATABASE_URL`, `DIRECT_URL`, `OPENAI_API_KEY` to Production.
+4. Add a build command override: `prisma migrate deploy && prisma generate && next build`.
+5. Deploy. Then run `pnpm seed` once locally pointing at the Neon URL to populate the Quanta thesis, followed by `pnpm seed:anchors` to seed the 6 demo founders.
+
+**Heads-up:** there is no application auth. Set an OpenAI monthly spend cap in your dashboard before sharing the URL — the OpenAI key is the load-bearing secret protecting against research-endpoint abuse. See [docs/PLAN.md §9](docs/PLAN.md#9-security-posture) for the full security posture.
 
 ## Stack
 
@@ -58,26 +61,35 @@ Next.js 16 · React 19 · TypeScript · Prisma 7 · Postgres (Neon) · tRPC v11 
 
 ```
 docs/
-  PLAN.md                         — comprehensive foundation doc
-  superpowers/specs/              — internal implementation spec
+  PLAN.md                         — live architecture + reasoning doc (read this)
+  superpowers/specs/              — frozen pre-build design spec (historical)
 src/
   app/                            — Next.js routes (App Router)
-    landing/                      — public-facing hero page
+    landing/                      — public-facing hero for Evan
     companies/, companies/[id]/   — kanban + deal detail (3 tabs)
     companies/new/                — paste-a-founder evaluation flow
-    settings/, funnel/            — Thesis editor + Conversion page
+    settings/, funnel/            — Thesis editor (confirm-on-save) + Conversion page
   components/
     companies/quanta-fit-scorecard.tsx   — the hero scorecard component
   server/
     routers/                      — tRPC (profile, companies, contacts, research, dashboard)
     services/
-      research-engine.ts          — 4 parallel web_search + Quanta-fit synthesis
+      research-engine.ts          — full pipeline: 4× web_search → 3-way parallel
+                                    (facts extract / founders extract / Quanta-fit synthesis)
       url-parse.ts                — extracts handle from LinkedIn/X/GitHub founder URLs
-      ai/prompts/
-        company-research.ts       — 4 web_search prompts
-        quanta-fit.ts             — 9-principle JSON-strict scorer
+      activity-log.ts             — typed audit-log writer
+      ai/
+        openai-client.ts          — shared singleton (used by openai-chat + web-research)
+        openai-chat.ts            — openaiJson<T>() with 1.5×-tokens retry on parse fail
+        web-research.ts           — Responses API + web_search wrapper
+        prompts/company-research.ts   — 4 web_search prompts
+        prompts/quanta-fit.ts         — 9-principle JSON-strict scorer
+scripts/
+  seed.ts                         — seed the Quanta thesis singleton
+  seed-anchors.ts                 — seed 6 anchor founder deals (idempotent)
 prisma/
   schema.prisma                   — Company / Contact / Profile / CompanyResearch / ResearchCache / ActivityLog / List
+  migrations/                     — 0_init + 1_indexes
 ```
 
 ## Lineage

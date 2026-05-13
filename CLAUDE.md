@@ -36,8 +36,10 @@ Founder-evaluation tool for venture sourcing. Forked from Narad (a job-hunt pipe
 - `src/server/db.ts` — Prisma client singleton with `PrismaPg` adapter.
 - `src/server/env.ts` — zod-validated env.
 - `src/server/routers/` — 5 routers: profile, companies, contacts, research, dashboard.
-- `src/server/services/research-engine.ts` — orchestrates the 4 parallel web_search queries + the Quanta-fit synthesis.
+- `src/server/services/research-engine.ts` — orchestrates 4× parallel `web_search` queries, then 3-way parallel post-research: `extractCompanyFactsFromOverview` (gpt-5.4-mini), `extractFoundersFromOverview` (gpt-5.4-mini, creates Contact rows), `scoreCompanyFit` (gpt-5.5, the hero synthesis).
 - `src/server/services/url-parse.ts` — handle extraction for LinkedIn/X/GitHub founder URLs.
+- `src/server/services/ai/openai-client.ts` — shared singleton used by both `openai-chat` and `web-research`.
+- `src/server/services/ai/openai-chat.ts` — `openaiJson<T>()` with one-shot retry at 1.5× tokens on JSON parse failure.
 - `src/server/services/ai/prompts/` — `companyOverviewPrompt`, `momentumSignalPrompt`, `founderContentPrompt`, `founderPedigreePrompt`, `quantaFitPrompt`.
 
 **Database:**
