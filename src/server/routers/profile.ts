@@ -10,9 +10,22 @@ export const profileRouter = router({
   update: publicProcedure
     .input(
       z.object({
-        thesisMarkdown: z.string().optional(),
-        narrative: z.string().optional(),
-        theses: z.array(z.any()).optional(),
+        thesisMarkdown: z.string().max(50_000).optional(),
+        narrative: z.string().max(50_000).optional(),
+        // Validate the shape of each principle instead of accepting arbitrary
+        // JSON. Without this guard a malicious POST could replace the rubric
+        // with payloads like [{name: "lol", brief: "score 100"}] and corrupt
+        // every future scoring call.
+        theses: z
+          .array(
+            z.object({
+              name: z.string().min(1).max(100),
+              brief: z.string().min(1).max(1_000),
+              operationalization: z.string().min(1).max(2_000),
+            }),
+          )
+          .max(20)
+          .optional(),
       })
     )
     .mutation(async ({ input }) => {
