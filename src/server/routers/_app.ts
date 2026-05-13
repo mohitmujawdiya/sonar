@@ -4,6 +4,7 @@ import { companiesRouter } from "./companies";
 import { contactsRouter } from "./contacts";
 import { researchRouter } from "./research";
 import { dashboardRouter } from "./dashboard";
+import { scanRouter } from "./scan";
 
 export const appRouter = router({
   profile: profileRouter,
@@ -11,6 +12,7 @@ export const appRouter = router({
   contacts: contactsRouter,
   research: researchRouter,
   dashboard: dashboardRouter,
+  scan: scanRouter,
 });
 
 export type AppRouter = typeof appRouter;
