@@ -283,8 +283,7 @@ This is a single-user demo with no auth. The non-trivial risks and how they're h
 - **Thesis** — `/settings`
 
 ### Pages
-- `/` — Pipeline overview (counts per stage, quick actions card)
-- `/landing` — Public-facing intro for Evan (hero, "three deliberate omissions", footer mailto)
+- `/` — Public-facing landing for Evan (hero, "three deliberate omissions", lineage, footer mailto). The bare URL is what gets shared, so the landing IS the home. `/landing` redirects here for backward compatibility with prior links.
 - `/companies/new` — paste a founder URL → evaluate
 - `/companies` — kanban with 5 columns (Sourced / Researched / Watching / Met / Passed), drag-and-drop with optimistic updates + rollback on failure
 - `/companies/[id]` — 3 tabs:
