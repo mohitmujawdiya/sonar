@@ -21,6 +21,9 @@ const ANCHORS: Anchor[] = [
   { name: "DeepSpace", founderUrl: "https://linkedin.com/in/donalddellapietra" },
   { name: "Vamo", founderUrl: "https://linkedin.com/in/bolun-li-12393573" },
   { name: "Aviator", founderUrl: "https://linkedin.com/in/ankitjaindce" },
+  { name: "Spira AI", founderUrl: "https://linkedin.com/in/llma" },
+  { name: "Phygtl Inc.", founderUrl: "https://linkedin.com/in/tommasodibartolo" },
+  { name: "Sierra", founderUrl: "https://linkedin.com/in/brettaylor" },
 ];
 
 async function seedAnchor(anchor: Anchor): Promise<void> {
@@ -29,7 +32,11 @@ async function seedAnchor(anchor: Anchor): Promise<void> {
 
   const existing = await db.company.findUnique({ where: { domain: parsed.domain } });
   if (existing) {
-    console.log(`  · ${anchor.name} already exists (id=${existing.id}); refreshing research…`);
+    if (existing.fitScore !== null) {
+      console.log(`  · ${anchor.name} already seeded (fitScore=${existing.fitScore}); skipping`);
+      return;
+    }
+    console.log(`  · ${anchor.name} exists but unscored; re-running research…`);
     await researchCompany(existing.id);
     return;
   }
