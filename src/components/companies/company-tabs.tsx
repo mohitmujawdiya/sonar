@@ -64,6 +64,11 @@ export function CompanyTabs({ company }: { company: Company }) {
       <header className="flex items-start justify-between gap-4">
         <div className="space-y-1">
           <h2 className="text-xl font-semibold">{company.name}</h2>
+          {company.contacts.length > 0 && (
+            <p className="text-sm font-medium text-foreground">
+              {company.contacts.map((c) => c.name).join(" · ")}
+            </p>
+          )}
           <p className="text-sm text-muted-foreground">
             {company.domain ?? "no domain"}{company.sector && ` · ${company.sector}`}
             {company.stage && ` · ${company.stage}`}

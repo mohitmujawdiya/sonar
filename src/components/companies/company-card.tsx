@@ -11,6 +11,7 @@ type Company = {
   domain: string | null;
   sector: string | null;
   fitScore: number | null;
+  contacts?: Array<{ id: string; name: string; role: string | null }>;
   _count?: { contacts: number };
 };
 
@@ -49,17 +50,12 @@ function CardChrome({
             {company.name}
           </Link>
           <p className="text-xs text-muted-foreground truncate">
-            {company.domain ?? "no domain"}
+            {company.contacts?.[0]?.name ?? company.domain ?? "no domain"}
             {company.sector ? ` · ${company.sector}` : ""}
           </p>
-          <div className="flex gap-3 mt-1 text-xs text-muted-foreground">
-            {company._count?.contacts !== undefined && (
-              <span>
-                {company._count.contacts} contact{company._count.contacts === 1 ? "" : "s"}
-              </span>
-            )}
-            {company.fitScore !== null && <span>fit {company.fitScore}</span>}
-          </div>
+          {company.fitScore !== null && (
+            <div className="mt-1 text-xs text-muted-foreground">fit {company.fitScore}</div>
+          )}
         </div>
       </div>
     </div>
