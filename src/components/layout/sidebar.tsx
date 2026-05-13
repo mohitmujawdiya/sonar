@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
-  Sparkles,
   Building2,
   PieChart,
   Compass,
@@ -15,7 +14,6 @@ import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./theme-toggle";
 
 const NAV_ITEMS = [
-  { href: "/scan", label: "Scan", icon: Sparkles },
   { href: "/companies", label: "Deals", icon: Building2 },
   { href: "/funnel", label: "Conversion", icon: PieChart },
   { href: "/settings", label: "Thesis", icon: Compass },

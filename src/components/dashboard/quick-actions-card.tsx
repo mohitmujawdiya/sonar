@@ -13,10 +13,10 @@ export function QuickActionsCard() {
       </CardHeader>
       <CardContent className="space-y-2">
         <Button asChild className="w-full justify-start">
-          <Link href="/scan"><Sparkles className="size-4" /> Scan sources</Link>
+          <Link href="/companies/new"><Sparkles className="size-4" /> Evaluate a founder</Link>
         </Button>
         <Button asChild variant="outline" className="w-full justify-start">
-          <Link href="/companies/new"><Building2 className="size-4" /> Add a company</Link>
+          <Link href="/companies"><Building2 className="size-4" /> Open the kanban</Link>
         </Button>
       </CardContent>
     </Card>

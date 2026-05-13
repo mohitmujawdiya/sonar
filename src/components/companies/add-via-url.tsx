@@ -16,7 +16,7 @@ export function AddViaUrl() {
 
   const create = trpc.companies.createFromUrl.useMutation({
     onSuccess: (company) => {
-      toast.success(`${company.name} added`);
+      toast.success(`${company.name} added — research firing`);
       router.push(`/companies/${company.id}`);
     },
     onError: (e) => toast.error(e.message),
@@ -31,16 +31,16 @@ export function AddViaUrl() {
       className="space-y-4 max-w-xl"
     >
       <div className="space-y-2">
-        <Label htmlFor="url">Company URL</Label>
+        <Label htmlFor="url">Founder or company URL</Label>
         <Input
           id="url"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          placeholder="https://stripe.com or stripe.com"
+          placeholder="linkedin.com/in/jane or x.com/jane or jane.dev or stripe.com"
           autoFocus
         />
         <p className="text-xs text-muted-foreground">
-          Paste a homepage, LinkedIn company URL, or Crunchbase page. We extract the domain.
+          LinkedIn (<code>/in/handle</code>), X/Twitter, GitHub, or a personal site / company homepage. Sonar takes it from there.
         </p>
       </div>
       <div className="space-y-2">
@@ -50,11 +50,11 @@ export function AddViaUrl() {
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={3}
-          placeholder="Why this company is interesting…"
+          placeholder="Why this founder is interesting — context the AI can't infer…"
         />
       </div>
       <Button type="submit" disabled={create.isPending || !url}>
-        {create.isPending ? "Adding…" : "Add company"}
+        {create.isPending ? "Adding…" : "Evaluate"}
       </Button>
     </form>
   );

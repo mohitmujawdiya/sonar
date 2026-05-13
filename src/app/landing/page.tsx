@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Github, ExternalLink } from "lucide-react";
+import { Github, ExternalLink, Search } from "lucide-react";
 
 export const metadata = {
-  title: "Sonar — sourcing engine for pre-VC AI-native founders",
-  description: "Scans HN, GitHub, and Hugging Face. Scores founders against Quanta's 9 culture principles. Built as the application deliverable for a venture analyst role.",
+  title: "Sonar — founder evaluation for venture sourcing",
+  description: "Paste a founder URL. Sonar researches them and scores against Quanta's 9 culture principles with citable evidence. Built as the application deliverable for a venture analyst role.",
 };
 
 export default function LandingPage() {
@@ -17,22 +17,22 @@ export default function LandingPage() {
             For Evan · 2026-05-13
           </p>
           <h1 className="text-5xl font-semibold tracking-tight leading-[1.05]">
-            I built a sourcing engine for myself. <span className="text-primary">Here it is pointed at Quanta.</span>
+            Paste a founder. <span className="text-primary">Get a Quanta-shaped read in 30 seconds.</span>
           </h1>
           <p className="text-lg text-muted-foreground leading-relaxed">
-            Sonar scans where AI-native founders show up <em>before</em> they fundraise — Hacker News, GitHub, Hugging Face — and scores every team against Quanta&apos;s 9 culture principles with citable evidence.
+            Sonar takes a founder URL — LinkedIn, X, GitHub, personal site — researches the team, and scores them against Quanta&apos;s 9 culture principles with citable evidence per principle.
           </p>
           <div className="flex gap-3 pt-2">
             <Button asChild size="lg">
-              <Link href="/companies">
-                Open the kanban
-                <ExternalLink className="size-4" />
+              <Link href="/companies/new">
+                <Search className="size-4" />
+                Evaluate a founder
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline">
-              <Link href="/scan">
-                <Sparkles className="size-4" />
-                Try the scan layer
+              <Link href="/companies">
+                Open the kanban
+                <ExternalLink className="size-4" />
               </Link>
             </Button>
           </div>
@@ -41,7 +41,7 @@ export default function LandingPage() {
         <section className="space-y-4 max-w-2xl">
           <h2 className="text-2xl font-semibold tracking-tight">What it does, in one paragraph</h2>
           <p className="text-base text-muted-foreground leading-relaxed">
-            Paste a URL or hit <em>scan</em>. Sonar runs four parallel web-search queries — company overview, momentum signal, founder content, founder pedigree — then synthesizes a 9-principle scorecard. Strong / weak / unknown per principle, with citations. Composite fitScore 0–100. About 30 seconds per founder.
+            Drop a founder URL. Sonar runs four parallel web-search queries — company overview, momentum signal, founder content, founder pedigree — then synthesizes a 9-principle scorecard. Strong / weak / unknown per principle, with citations. Composite fitScore 0–100. About 30 seconds.
           </p>
         </section>
 
@@ -53,12 +53,12 @@ export default function LandingPage() {
               body="Founder DMs from a stranger in a voice that isn't yours are a demo risk, not an asset. The drafting layer lives in Sonar's ancestor project (a job-hunt CRM). It's not here."
             />
             <Omission
-              title="No paid sourcing APIs"
-              body="Crunchbase is $249/mo and lags real signal. Twitter API is $5K+/yr. LinkedIn is ToS gray. HN + GitHub + HF cover ~80% of pre-launch AI-native founders for $0."
+              title="No paid sourcing data"
+              body="Crunchbase is $249/mo and lags real signal. Twitter API is $5K+/yr. The cheapest meaningful enrichment is a free OpenAI web-search per founder."
             />
             <Omission
-              title="No YC scan"
-              body="YC companies are already capitalized — $500K + advisory. Lagging indicator. We want founders before a venture firm has touched them."
+              title="No scan layer"
+              body="Scanning HN / GitHub / HF returned surface candidates that still needed full research to be evaluable. Stripped out. Sourcing happens upstream of Sonar — in conversations, on Twitter, through intros."
             />
           </div>
         </section>
@@ -91,10 +91,9 @@ export default function LandingPage() {
           <h2 className="text-2xl font-semibold tracking-tight">Lineage</h2>
           <p className="text-base text-muted-foreground leading-relaxed">
             Forked from Narad, a job-hunt pipeline I built for myself, at the commit before its
-            SQLite redesign. Narad scanned where engineering jobs got posted, researched companies,
-            scored fit against my CV, and drafted outreach. Sonar keeps the research and scoring
-            layers, retunes the prompts for VC sourcing, drops outreach entirely. Same engine,
-            different aperture.
+            SQLite redesign. Narad researched companies, scored fit against my CV, and drafted
+            outreach. Sonar keeps the research and scoring layers, retunes the prompts for VC,
+            drops outreach entirely. Same engine, different aperture.
           </p>
           <Button asChild variant="outline" size="sm">
             <a href="https://github.com/mohitmujawdiya/sonar" target="_blank" rel="noopener">

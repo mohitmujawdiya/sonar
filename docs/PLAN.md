@@ -1,6 +1,6 @@
 # Sonar — Foundation & Build Plan
 
-> A sourcing engine for pre-VC AI-native founders, scored against Quanta Ventures' 9 culture principles.
+> Paste a founder URL. Get a Quanta-shaped read in 30 seconds.
 
 **Status:** In active build. 12-hour delivery deadline from 2026-05-13.
 **Repo:** github.com/mohitmujawdiya/sonar
@@ -10,11 +10,12 @@
 
 ## 1. What Sonar is
 
-Sonar is a **founder evaluation tool** for venture sourcing. Three things it does:
+Sonar is a **founder evaluation tool** for venture sourcing. Two things it does:
 
-1. **Scans** the places where AI-native founders ship things *before they fundraise* — Hacker News (Show HN), GitHub (trending AI/ML repos), Hugging Face (trending Spaces + Models). Free APIs only.
-2. **Researches** each candidate company using OpenAI's Responses API with `web_search`, producing 4 distinct artifacts: company overview, momentum signal, founder content, founder pedigree.
-3. **Scores** every founder team against **Quanta's 9 culture principles** with citable evidence per principle and a composite fitScore.
+1. **Researches** a founder using OpenAI's Responses API with `web_search`, producing 4 distinct artifacts: company overview, momentum signal, founder content, founder pedigree.
+2. **Scores** the founder team against **Quanta's 9 culture principles** with citable evidence per principle and a composite fitScore 0-100.
+
+Input: paste a founder URL (LinkedIn `/in/handle`, X/Twitter, GitHub, personal site, or company homepage). Output: a 9-principle scorecard in about 30 seconds.
 
 It deliberately doesn't do outreach. The companion ancestor project ([Narad](#3-lineage)) has a drafting engine; Sonar evaluates, humans contact.
 
@@ -29,10 +30,12 @@ The narrative: *I built a sourcing engine for myself for a different purpose (jo
 Sonar is forked from **Narad**, my outbound job-hunt pipeline, at the commit just before Narad's SQLite + Pursuit-first redesign. At that fork point Narad was a Postgres + multi-table CRM-shaped engine (Company / Contact / Touchpoint / Message / CompanyResearch / Profile) with AI research, fit scoring, drafting, and queue-driven sending.
 
 The Sonar fork:
-- **Kept** the research engine, the AI infrastructure (OpenAI Responses + web_search), the kanban UI, the activity log, the company/contact data model, the source-importer abstraction.
+- **Kept** the research engine, the AI infrastructure (OpenAI Responses + web_search), the kanban UI, the activity log, the company/contact data model, the paste-a-URL onboarding flow.
 - **Dropped** the outreach layer (drafting engine, voice rules, send adapters, queue/inbox pages, sequences/templates models). Sonar is evaluation-only.
 - **Replaced** the fit-scoring prompt (job-fit against a CV) with a Quanta-fit scorecard against the 9 culture principles.
-- **Added** a scan layer pointed at three pre-VC AI-native sources (HN, GitHub, Hugging Face).
+- **Improved** the URL parser to extract founder handles from LinkedIn `/in/`, X/Twitter, and GitHub profile URLs — so paste-a-LinkedIn lands a deal record named after the founder, not the platform.
+
+Mid-build pivot worth noting in the commit history: an earlier iteration had a "scan" layer that pulled candidates from Hacker News, GitHub trending, and Hugging Face. The candidates it returned were surface-level — still needed full research to be evaluable — so the layer was adding complexity without load-bearing signal. Stripped out. Sourcing happens upstream of Sonar (in conversations, on Twitter, through intros); Sonar is the evaluation engine.
 
 ## 4. The thesis — founder-quality first
 
@@ -64,14 +67,14 @@ Each omission below is a deliberate design choice, explained.
 - **Why:** "Founder evaluation tool" was the promise. Auto-drafting DMs to founders in a tone Evan didn't write is a demo *risk*, not an asset.
 - **What this looks like:** No `/queue`, no `/inbox`, no send adapters, no draft confidence scoring, no voice rules. The underlying drafting code lives in Narad's git history; it's not in Sonar.
 
-### No Crunchbase / Twitter / LinkedIn scanning
-- **Crunchbase:** API starts at $249/mo. Already-funded companies are a lagging indicator anyway; Quanta wants pre-funding.
-- **Twitter (X):** API is ~$5K+/yr for usable volume. ToS gray for scraping.
-- **LinkedIn:** Account-ban risk + ToS gray.
-- **Net effect:** ~80% of pre-launch AI-native founders are still discoverable through HN + GitHub + HuggingFace for $0. Cost-awareness is a sourcing-engine feature.
+### No scan layer
+- **Why:** An earlier iteration had a `/scan` page pulling candidates from HN, GitHub, Hugging Face. The candidates were surface-level — title + handle, no founder context — and each still needed full research to score. The bottleneck was research depth, not source breadth. So we stripped scanning out entirely. Sourcing happens upstream of Sonar; Sonar is the evaluation step.
+- **What this means:** Sonar takes a founder URL as input. The analyst (or Evan) discovers founders through conversations, Twitter, intros — same as they would anyway — then pastes the URL into Sonar.
 
-### No YC
-- **Why:** YC companies are already capitalized (~$500K + advisory). They're a lagging indicator, not leading. The goal is finding founders *before* a venture firm has touched them.
+### No paid sourcing data
+- **Crunchbase:** API starts at $249/mo. Already-funded companies are a lagging indicator anyway.
+- **Twitter (X):** API is ~$5K+/yr for usable volume. ToS gray for scraping.
+- **Net effect:** the cheapest meaningful enrichment is a free OpenAI `web_search` per founder. Cost-awareness is a sourcing-engine feature.
 
 ### No tests beyond a smoke test
 - **Why:** Sonar is a demo, not a long-lived product. The vitest suite from Narad's lineage stays where it still passes; broken tests after the fork were deleted rather than maintained. CI is not configured.
@@ -89,13 +92,11 @@ Each omission below is a deliberate design choice, explained.
 ### Server layout
 - `src/server/db.ts` — Prisma client singleton with PrismaPg adapter
 - `src/server/env.ts` — zod-validated env (DATABASE_URL, DIRECT_URL, OPENAI_API_KEY, optional GITHUB_TOKEN)
-- `src/server/routers/` — 6 routers: `profile`, `companies`, `contacts`, `research`, `sources`, `dashboard`
+- `src/server/routers/` — 5 routers: `profile`, `companies`, `contacts`, `research`, `dashboard`
 - `src/server/services/` — domain logic
   - `research-engine.ts` — orchestrates 4 parallel web-search queries + the Quanta-fit scorecard synthesis
-  - `source-importer.ts` — paste-and-parse imports + dedup
-  - `scan-engine.ts` — *(coming)* orchestrates the 3-source on-demand scan
+  - `url-parse.ts` — extracts handle from LinkedIn/X/GitHub founder URLs
   - `activity-log.ts`
-- `src/server/services/parsers/` — `single-url`, `url-list` for paste-and-import; `hn-show`, `github-trending`, `hugging-face` for scan *(coming)*
 - `src/server/services/ai/prompts/`
   - `company-research.ts` — 4 web_search prompts (overview, momentumSignal, founderContent, founderPedigree)
   - `quanta-fit.ts` — system+user prompt for the JSON-strict 9-principle scorer + `DEFAULT_QUANTA_PRINCIPLES`
@@ -178,31 +179,30 @@ Each cached 14 days in `ResearchCache` keyed by `(companyId, kind, prompt)` hash
 
 The scorecard is rendered as a 9-card grid on the deal detail page — the hero UI component.
 
-## 8. The scan layer
+## 8. The onboarding flow — paste a founder URL
 
-`/scan` page with three source cards. Click "Scan now" → parallel HTTP fetches → results page with candidate cards → "Add to pipeline" creates a Company in `Sourced` and auto-fires research.
+`/companies/new` is the single onboarding path. One text field: paste any of —
 
-| Source | API | Filter | Why this source |
-|---|---|---|---|
-| HN Show-HN | Algolia (free) | `show_hn` tag, last 30 days | Strongest single signal for solo founders shipping demos |
-| GitHub trending | GitHub REST (free) | AI/ML/LLM topics, recent stars surge | Most AI builders are visible on GitHub before anywhere else |
-| Hugging Face | HF Hub API (free) | Trending Spaces + Models | Most thesis-aligned for AI-native specifically — these are builders, not marketers |
+- **LinkedIn profile** — `linkedin.com/in/handle` → URL parser extracts the handle and titleizes ("Donald Della Pietra" rather than "Linkedin").
+- **X/Twitter profile** — `x.com/handle` or `twitter.com/handle` → handle extracted.
+- **GitHub profile** — `github.com/user` → handle extracted.
+- **Personal site** — `jane.dev` → domain.
+- **Company homepage** — `stripe.com` → domain. Research figures out the founders.
 
-Dedup against existing `Company.domain` on add.
+On submit: creates a Company in `Sourced`, fires the 4 parallel `web_search` queries, runs the Quanta-fit synthesis. Total wait ~30 seconds. Dedup keyed on `(domain, handle)` for profile URLs so the same founder doesn't get duplicate records.
 
 ## 9. UI surface
 
-### Sidebar (4 items)
-- **Scan** — `/scan`
-- **Deals** — `/deals` (kanban)
+### Sidebar (3 items)
+- **Deals** — `/companies` (kanban)
 - **Conversion** — `/funnel`
 - **Thesis** — `/settings`
 
 ### Pages
-- `/` — Pipeline overview (counts per stage, last scan, last research)
-- `/scan` — 3 source cards → scan results → "Add to pipeline"
-- `/deals` — kanban with 5 columns (Sourced / Researched / Watching / Met / Passed), drag, optimistic updates
-- `/deals/[id]` — 3 tabs:
+- `/` — Pipeline overview (counts per stage, last research)
+- `/companies/new` — paste a founder URL → evaluate
+- `/companies` — kanban with 5 columns (Sourced / Researched / Watching / Met / Passed), drag, optimistic updates
+- `/companies/[id]` — 3 tabs:
   - **Research** — company overview + momentum signal + founder content + founder pedigree (with citations)
   - **Quanta Fit** — the 9-principle scorecard (hero)
   - **Notes** — private free-text
@@ -223,7 +223,7 @@ Tasks tracked. Status as of writing:
 | 5 | Rewrite AI prompts for Quanta-fit scoring | ✅ |
 | 6 | UI: rename Pursuit→Deal, restructure sidebar + detail page | ⏳ |
 | 7 | Build Quanta Fit scorecard component (hero feature) | ⏳ |
-| 8 | Build /scan page + HN + GitHub + HF parsers | ⏳ |
+| 8 | ~~Build /scan page + HN + GitHub + HF parsers~~ → **reverted** | ↩️ |
 | 9 | Build /landing page (public-facing demo intro) | ⏳ |
 | 10 | Seed Quanta thesis content (Profile.thesisMarkdown + 9 theses) | ⏳ |
 | 11 | Rewrite README + repo-level polish | ⏳ |
@@ -247,13 +247,13 @@ Each anchor: create Company + Contact records, run research engine (4 parallel w
 
 If Sonar lives past the demo, these are obvious next moves. None are in scope for the 12-hour build.
 
-- **Live cron scan** — wake daily, scan all 3 sources, surface new candidates via email/Slack digest.
 - **Founder follow** — given a Twitter/X handle, watch for new posts and flag thesis-aligned ones.
 - **Reverse evaluation** — given a thesis, find historical founders who would have scored well (calibration).
 - **Audit trail UI** — surface ActivityLog as a "deal history" view.
 - **Team-shared notes / lists** — multi-user.
 - **Vector store of founder content** — search "founders who think like X" semantically.
 - **Outreach drafting layer** — port Narad's drafting engine over, retuned for VC voice. Optional: only if Evan asks for it.
+- **A sourcing layer, done right** — the scan layer was stripped because surface-level candidates didn't justify the wiring. A future version could do this with a per-founder follow loop (watch a hand-curated set of Twitter accounts, alert on signal-shaped posts) rather than a top-N listing scan.
 
 ## 12. How to read this repo
 

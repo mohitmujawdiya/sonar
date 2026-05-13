@@ -1,6 +1,6 @@
 # Sonar
 
-> A sourcing engine for pre-VC AI-native founders, scored against Quanta Ventures' 9 culture principles.
+> Paste a founder URL. Get a Quanta-shaped read in 30 seconds.
 
 **Live demo:** _(deploy URL goes here once Vercel is wired up)_
 
@@ -8,14 +8,14 @@
 
 ## What this is
 
-I built a sourcing engine for myself for a different purpose (job hunting). This is the same engine pointed at venture sourcing — it scans where AI-native founders ship things *before* they fundraise (HN, GitHub, Hugging Face), researches each, and scores them against Quanta's 9 culture principles with citable evidence.
+I built a sourcing engine for myself for a different purpose (job hunting). This is the same engine pointed at venture sourcing — point it at a founder URL and it researches them, then scores them against Quanta's 9 culture principles with citable evidence.
 
 The repo is the proof artifact. The hosted demo is where you click around.
 
 ## How it works
 
-1. **Scan** — three sources (HN Show-HN, GitHub trending in AI/ML, Hugging Face trending). Each fires a parallel parser, returns candidates, dedup'd against the existing pipeline.
-2. **Research** — for each company, an OpenAI Responses-API + `web_search` engine produces 4 artifacts: company overview, momentum signal (shipping cadence — not ARR), founder content (recent posts/papers/threads), founder pedigree (top 0.01% signals).
+1. **Paste** — a founder URL (LinkedIn `/in/handle`, X/Twitter, GitHub, or a personal site / company homepage).
+2. **Research** — Sonar fires 4 parallel OpenAI `web_search` queries: company overview, momentum signal (shipping cadence — not ARR), founder content (recent posts/papers/threads), founder pedigree (top 0.01% signals).
 3. **Score** — a synthesis prompt evaluates the team against all 9 Quanta culture principles. Per-principle: signal (strong/weak/unknown) + evidence + reasoning. Composite fitScore 0-100.
 4. **Track** — kanban with 5 stages: Sourced → Researched → Watching → Met → Passed.
 
@@ -23,11 +23,9 @@ No outreach layer. Sonar evaluates; humans contact.
 
 ## What's deliberately not in Sonar
 
-- **Crunchbase** — $249/mo minimum, and already-funded companies are a lagging indicator.
-- **Twitter** — API is ~$5K+/yr for usable volume; ToS gray for scraping.
-- **LinkedIn** — account-ban risk + ToS gray.
-- **YC** — already capitalized. We want founders *before* a venture firm has touched them.
 - **Outreach drafting** — different problem; lives in this repo's ancestor (Narad) but isn't here.
+- **Paid sourcing data** — Crunchbase ($249/mo) lags real signal; Twitter API ($5K+/yr) doesn't justify the spend. OpenAI `web_search` per founder gets us the same depth for cents.
+- **Scan layer** — earlier iterations had a /scan page over HN / GitHub / Hugging Face. The candidates it returned were surface-level — still needed full research to be evaluable. Stripped out. Sourcing happens upstream of Sonar; Sonar is the evaluation engine.
 
 Cost-awareness is a sourcing-engine feature, not a limitation.
 
@@ -65,16 +63,16 @@ docs/
 src/
   app/                            — Next.js routes (App Router)
     landing/                      — public-facing hero page
-    scan/                         — 3-source scan UI
     companies/, companies/[id]/   — kanban + deal detail (3 tabs)
+    companies/new/                — paste-a-founder evaluation flow
     settings/, funnel/            — Thesis editor + Conversion page
   components/
     companies/quanta-fit-scorecard.tsx   — the hero scorecard component
   server/
-    routers/                      — tRPC (profile, companies, contacts, research, dashboard, scan)
+    routers/                      — tRPC (profile, companies, contacts, research, dashboard)
     services/
       research-engine.ts          — 4 parallel web_search + Quanta-fit synthesis
-      scan-engine.ts              — HN / GitHub / HF orchestrator
+      url-parse.ts                — extracts handle from LinkedIn/X/GitHub founder URLs
       ai/prompts/
         company-research.ts       — 4 web_search prompts
         quanta-fit.ts             — 9-principle JSON-strict scorer
@@ -84,4 +82,4 @@ prisma/
 
 ## Lineage
 
-Forked from Narad (Mohit's outbound job-hunt pipeline) at the commit before its SQLite redesign. The job-hunt project was an outbound CRM with AI research, fit scoring, and drafting; the same engine — research, score, track — generalizes to venture sourcing. `git log` shows the build commit-by-commit.
+Forked from Narad (Mohit's outbound job-hunt pipeline) at the commit before its SQLite redesign. The job-hunt project was an outbound CRM with AI research, fit scoring, and drafting; the same engine — research, score, track — generalizes to venture sourcing. `git log` shows the build commit-by-commit, including the mid-build pivot from scan-layer-driven to paste-a-founder-driven.
