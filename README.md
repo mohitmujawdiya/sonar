@@ -2,7 +2,7 @@
 
 > Paste a founder URL. Get a Quanta-shaped read in 30 seconds.
 
-**Live demo:** https://sonar-eight-zeta.vercel.app/
+**Live demo:** _(URL shared privately — see the GitHub repo description or DM)_
 
 > Built in 12 hours as the application deliverable for a venture analyst role at Quanta. Read [docs/PLAN.md](docs/PLAN.md) for the full foundation doc — what it is, why, how it's built, what's deliberately not included.
 
